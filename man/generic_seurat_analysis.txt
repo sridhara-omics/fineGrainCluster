@@ -1,0 +1,14 @@
+The Seurat object is created from the input matrix of gene expression values using the CreateSeuratObject function. The input data is given a project name of "Seurat_Analysis".
+The gene expression data is normalized using the NormalizeData function with the LogNormalization method and a scale factor of 10,000.
+The FindVariableFeatures function is used to identify the highly variable genes (features) in the data. The selection method used is "vst" and the number of features selected is set to 2000.
+The gene expression values for the selected features are scaled using the ScaleData function.
+Principal component analysis (PCA) is performed on the scaled data using the RunPCA function, with the top 10 PCs printed.
+The JackStraw method is applied to the PCA data to determine the significance of each PC, with 100 replicates. The results are scored using the ScoreJackStraw function.
+A weighted PCA is performed on the data to determine the number of dimensions to use for clustering.
+The FindNeighbors function is used to find neighboring cells based on the top 10 dimensions determined in step 7.
+Clustering of the cells is performed using the FindClusters function with a resolution of 0.6.
+The "dimensionality" of the data is determined by adding a "dimension" column to the metadata that indicates the cluster assignment for each cell.
+Non-linear dimensional reduction is performed using the RunUMAP function on the top 10 dimensions determined in step 7.
+Differentially expressed genes are identified for each cluster using the FindAllMarkers function, with a minimum log fold change of 0.25 and a minimum percentage of positive cells of 0.25.
+Cell type identity is assigned to each cluster using the CellTypeScore function on the first two dimensions of the UMAP reduction.
+The function returns the Seurat object with the results of all the analysis steps.
