@@ -8,38 +8,37 @@ library(Seurat)
 #' @export
 #'
 #' @examples
-generic_seurat_analysis <- function(data) {
+generic_seurat_analysis <- function(data, scale.factor=1000, nfeatures=20, num.replicate=100, dims = 1:10, resolution=0.6, min.pct = 0.25, logfc.threshold = 0.25) {
 
   # Setup the Seurat Object
   sce <- CreateSeuratObject(counts = data, project = "Seurat_Analysis")
 
   # Standard pre-processing workflow
-  sce <- NormalizeData(sce, normalization.method = "LogNormalization", scale.factor = 10000)
-  sce <- FindVariableFeatures(sce, selection.method = "vst", nfeatures = 2000)
+  sce <- NormalizeData(sce, normalization.method = "LogNormalize", scale.factor = scale.factor)
+  sce <- FindVariableFeatures(sce, selection.method = "vst", nfeatures = nfeatures)
 
   # Normalizing the data
-  sce <- ScaleData(sce, features = rownames(sce@data))
+  sce <- ScaleData(sce)
 
   # Identification of highly variable features (feature selection)
   sce <- RunPCA(sce, features = VariableFeatures(sce), pcs.print = 1:10)
 
   # Scaling the data
-  sce <- JackStraw(sce, num.replicate = 100)
-  sce <- ScoreJackStraw(sce, plot = FALSE)
-  sce <- WnamedDimensionalReduction(sce, reduction.use = "pca", dims.use = 1:10)
+  sce <- JackStraw(sce, num.replicate = num.replicate)
+  # sce <- ScoreJackStraw(sce)
 
   # Perform linear dimensional reduction
-  sce <- FindNeighbors(sce, dims = 1:10)
-  sce <- FindClusters(sce, resolution = 0.6)
+  sce <- FindNeighbors(sce, reduction = "pca", dims = dims)
+  sce <- FindClusters(sce, resolution = resolution)
 
   # Determine the ‘dimensionality’ of the dataset
-  sce@meta.data$dimension <- as.factor(sce@meta.data$cluster)
+  sce@meta.data$dimension <- as.factor(unique(sce@meta.data$cluster))
 
   # Cluster the cells
-  sce <- RunUMAP(sce, dims = 1:10)
+  sce <- RunUMAP(sce, dims = dims)
 
   # Run non-linear dimensional reduction (UMAP/tSNE)
-  sce <- FindAllMarkers(sce, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+  sce <- FindAllMarkers(sce, only.pos = TRUE, min.pct = min.pct, logfc.threshold = logfc.threshold)
 
   # Finding differentially expressed features (cluster biomarkers)
   sce <- CellTypeScore(sce, dims = c(1,2), reduction = "umap")
